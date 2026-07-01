@@ -108,6 +108,13 @@
       background: #fff; color: var(--muted); font-size: 12.5px;
     }
     .seg button.active { background: var(--blue); color: #fff; }
+    .lawyer-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .lawyer-tabs button {
+      min-height: 34px; padding: 0 14px; border: 1px solid var(--line);
+      border-radius: 999px; background: #fff; color: var(--text); font-size: 13px; cursor: pointer;
+    }
+    .lawyer-tabs button:hover { border-color: #b9c6dc; }
+    .lawyer-tabs button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
     .hint { margin: 6px 0 0; font-size: 11.5px; color: var(--muted); }
     .calc-box { display: none; }
     .calc-box.on { display: block; }
@@ -258,10 +265,9 @@
       <aside class="panel" id="formPanel">
         <div class="form-row" id="lawyerRow">
           <label for="lawyer">担当弁護士</label>
-          <input id="lawyer" list="lawyerList" placeholder="例: 川上 / 自由に入力できます">
-          <datalist id="lawyerList">
-            <option>川上</option>
-          </datalist>
+          <div class="lawyer-tabs" id="lawyerTabs"></div>
+          <input id="lawyer" list="lawyerList" placeholder="タブで選択（自由入力も可）">
+          <datalist id="lawyerList"></datalist>
         </div>
 
         <h2 id="formTitle">期限を追加</h2>
@@ -478,6 +484,9 @@
     const WS_KEY    = "deadline-task-watch-workspace";
     const PIN_KEY   = "deadline-task-watch-pin"; // 端末に保存を選んだ場合のみ
 
+    // ===== 弁護士一覧（タブ選択・自由入力も可） =====
+    const LAWYERS = ["山本", "川上", "櫻井", "赤岡", "嶋村"];
+
     // ===== 状態 =====
     let items = loadCache();
     let editingId = null;
@@ -581,6 +590,7 @@ service cloud.firestore {
       els.dueDate.value = ""; els.baseDate.value = ""; els.offsetDays.value = "7";
       els.memo.value = ""; els.priority.value = "中"; els.kind.value = "準備書面";
       els.lawyer.value = els.lawyerFilter.value !== "all" ? els.lawyerFilter.value : "";
+      updateLawyerActive();
       setMode("direct");
     }
     function exitEdit() {
@@ -600,6 +610,7 @@ service cloud.firestore {
       els.title.value = item.title || "";
       els.kind.value = item.kind || "準備書面";
       els.lawyer.value = item.lawyer || "";
+      updateLawyerActive();
       els.priority.value = item.priority || "中";
       els.memo.value = item.memo || "";
       if (item.baseDate) {
@@ -670,14 +681,28 @@ service cloud.firestore {
         });
     }
 
+    function renderLawyerTabs() {
+      const tabs = $("lawyerTabs");
+      tabs.innerHTML = LAWYERS.map(n => `<button type="button" data-lawyer="${escapeAttr(n)}">${escapeHtml(n)}</button>`).join("");
+      tabs.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+        // もう一度押すと解除
+        els.lawyer.value = els.lawyer.value.trim() === b.dataset.lawyer ? "" : b.dataset.lawyer;
+        updateLawyerActive();
+      }));
+    }
+    function updateLawyerActive() {
+      const v = els.lawyer.value.trim();
+      $("lawyerTabs").querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.lawyer === v));
+    }
+
     function refreshLawyers() {
-      const names = Array.from(new Set(items.map(i => (i.lawyer || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ja"));
+      const dataNames = items.map(i => (i.lawyer || "").trim()).filter(Boolean);
+      const names = Array.from(new Set([...LAWYERS, ...dataNames]));
       const cur = els.lawyerFilter.value;
       els.lawyerFilter.innerHTML = `<option value="all">担当すべて</option>` +
         names.map(n => `<option value="${escapeAttr(n)}">${escapeHtml(n)}</option>`).join("");
       els.lawyerFilter.value = names.includes(cur) || cur === "all" ? cur : "all";
-      const dlNames = Array.from(new Set(["川上", ...names]));
-      $("lawyerList").innerHTML = dlNames.map(n => `<option>${escapeHtml(n)}</option>`).join("");
+      $("lawyerList").innerHTML = names.map(n => `<option>${escapeHtml(n)}</option>`).join("");
     }
 
     function render() {
@@ -1046,9 +1071,10 @@ service cloud.firestore {
     els.search.addEventListener("input", render);
     els.statusFilter.addEventListener("change", render);
     els.lawyerFilter.addEventListener("change", () => {
-      if (!editingId && els.lawyerFilter.value !== "all") els.lawyer.value = els.lawyerFilter.value;
+      if (!editingId && els.lawyerFilter.value !== "all") { els.lawyer.value = els.lawyerFilter.value; updateLawyerActive(); }
       render();
     });
+    els.lawyer.addEventListener("input", updateLawyerActive);
     els.rangeFilter.addEventListener("change", render);
 
     $("settingsBtn").addEventListener("click", openSetup);
@@ -1060,6 +1086,7 @@ service cloud.firestore {
     $("pinSettingsBtn").addEventListener("click", () => { closePinPrompt(); openSetup(); });
 
     // ===== 起動 =====
+    renderLawyerTabs();
     setMode("direct");
     render();
     if (getConfig() && localStorage.getItem(WS_KEY)) {

@@ -1,5 +1,5 @@
 {
-  "_説明": "公開しても安全な設定のみ。宛先メールはGitHubのSecret『NOTIFY_EMAILS』に入れます（このファイルには書きません）。",
-  "thresholdDays": 7,
+  "_説明": "公開しても安全な設定のみ。宛先メールはGitHubのSecret『NOTIFY_EMAILS』に入れます（このファイルには書きません）。thresholdDays=1 → 期限の前日・当日、および期限切れを通知。",
+  "thresholdDays": 1,
   "notifyOverdue": true
 }
