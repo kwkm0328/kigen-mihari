@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>書面提出期限 見張り（オンライン）</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #fff;
+      --text: #172033;
+      --muted: #667085;
+      --line: #d9e1ee;
+      --blue: #2563eb;
+      --green: #079455;
+      --amber: #b54708;
+      --red: #c01048;
+      --shadow: 0 16px 36px rgba(25, 35, 60, .10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #eef4ff 0%, #f8fbff 48%, #f7faf9 100%);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 28px;
+      background: rgba(255,255,255,.9);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 800;
+      background: linear-gradient(135deg, #dc2626, #2563eb);
+    }
+    h1 { margin: 0; font-size: 20px; letter-spacing: 0; }
+    .sub { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    main { width: min(1320px, calc(100% - 36px)); margin: 24px auto 42px; }
+    button, .btn {
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      text-decoration: none;
+      font: inherit;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button:hover, .btn:hover { border-color: #b9c6dc; }
+    .primary { border-color: var(--blue); background: var(--blue); color: #fff; }
+    .primary:hover { background: #1d4ed8; }
+    .danger { border-color: #fecdca; color: var(--red); }
+    .ghost { background: transparent; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+    }
+    input, select { min-height: 42px; padding: 0 12px; }
+    textarea { min-height: 70px; padding: 10px 12px; resize: vertical; }
+    .layout {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .panel, .stat, .table-wrap, .banner {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.92);
+      box-shadow: var(--shadow);
+    }
+    .panel { padding: 16px; position: sticky; top: 88px; }
+    .panel h2 { margin: 0 0 4px; font-size: 15px; }
+    .panel .editing-flag { display: none; margin: 0 0 12px; font-size: 12px; color: var(--blue); font-weight: 700; }
+    .panel.editing .editing-flag { display: block; }
+    .form-row { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; }
+    .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .seg button {
+      flex: 1; min-height: 38px; border: 0; border-radius: 0;
+      background: #fff; color: var(--muted); font-size: 12.5px;
+    }
+    .seg button.active { background: var(--blue); color: #fff; }
+    .hint { margin: 6px 0 0; font-size: 11.5px; color: var(--muted); }
+    .calc-box { display: none; }
+    .calc-box.on { display: block; }
+    .direct-box.off { display: none; }
+    .calc-result { margin: 4px 0 0; font-size: 13px; font-weight: 700; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat { padding: 14px; box-shadow: none; }
+    .stat span { display: block; color: var(--muted); font-size: 12px; }
+    .stat b { display: block; margin-top: 6px; font-size: 24px; }
+    .stat.alert b { color: var(--red); }
+    .banner {
+      display: none;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      border-color: #fecdca;
+      background: #fff1f3;
+      color: var(--red);
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+    .banner.show { display: flex; }
+    .banner .dismiss { margin-left: auto; }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 130px 130px 150px auto;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .table-wrap { overflow: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 960px; }
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    th { color: var(--muted); background: #f8fafc; font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    tr.row-overdue td { background: #fff5f6; }
+    tr.row-soon td { background: #fffaeb; }
+    tr.row-done td { opacity: .6; }
+    .due-main { font-weight: 700; white-space: nowrap; }
+    .due-sub { color: var(--muted); font-size: 11px; }
+    .left { font-weight: 800; font-size: 14px; white-space: nowrap; }
+    .left.bad { color: var(--red); }
+    .left.warn { color: var(--amber); }
+    .left.ok { color: var(--green); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .ok { color: var(--green); border-color: #abefc6; background: #ecfdf3; }
+    .warn { color: var(--amber); border-color: #fedf89; background: #fffaeb; }
+    .bad { color: var(--red); border-color: #fecdca; background: #fff1f3; }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .actions button { min-height: 32px; padding: 0 10px; font-size: 12px; }
+    .empty { padding: 28px; text-align: center; color: var(--muted); }
+    .toast {
+      position: fixed; right: 20px; bottom: 20px; z-index: 30;
+      background: #101828; color: #fff; padding: 12px 16px;
+      border-radius: 8px; font-size: 13px; box-shadow: var(--shadow);
+      opacity: 0; transform: translateY(8px); transition: .25s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* 同期ステータス */
+    .sync {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 0 12px; min-height: 34px; border-radius: 999px;
+      border: 1px solid var(--line); background: #fff; font-size: 12px; color: var(--muted);
+    }
+    .sync .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; }
+    .sync.online .dot { background: var(--green); }
+    .sync.offline .dot { background: var(--amber); }
+    .sync.error .dot { background: var(--red); }
+    .sync.locked .dot { background: var(--blue); }
+
+    /* オーバーレイ（設定・PIN） */
+    .overlay {
+      position: fixed; inset: 0; z-index: 40; display: none;
+      align-items: center; justify-content: center; padding: 18px;
+      background: rgba(15,23,42,.45); backdrop-filter: blur(3px);
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      width: min(560px, 100%); max-height: 90vh; overflow: auto;
+      background: #fff; border-radius: 14px; box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .modal h2 { margin: 0 0 4px; font-size: 18px; }
+    .modal p.lead { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .modal .form-row { margin-bottom: 14px; }
+    .modal textarea { min-height: 120px; font-family: ui-monospace, "Consolas", monospace; font-size: 12px; }
+    .modal .row-btns { display: flex; gap: 10px; margin-top: 6px; }
+    .modal .row-btns button { flex: 1; }
+    .check { display: flex; align-items: center; gap: 8px; }
+    .check input { width: auto; min-height: 0; }
+    .steps { margin: 0 0 16px; padding-left: 18px; font-size: 12.5px; color: var(--muted); line-height: 1.7; }
+    .steps a { color: var(--blue); }
+    .steps code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+    details.help { margin-bottom: 16px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: #f8fafc; }
+    details.help summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+
+    @media (max-width: 980px) {
+      header { align-items: flex-start; flex-wrap: wrap; }
+      .layout, .toolbar, .stats { grid-template-columns: 1fr; }
+      .panel { position: static; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="mark">期</div>
+      <div>
+        <h1>書面提出期限 見張り</h1>
+        <p class="sub">オンライン同期版 — PC・スマホどちらでも同じ期限を確認できます。</p>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="sync" id="syncChip"><span class="dot"></span><span id="syncText">準備中…</span></span>
+      <button id="settingsBtn" title="同期・暗証番号の設定">⚙ 設定</button>
+      <button id="backupBtn" title="全データをJSONファイルに保存">バックアップ</button>
+      <button id="restoreBtn" title="JSONファイルから復元">復元</button>
+      <button id="exportBtn" title="表示中をCSVに出力">CSV出力</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="layout">
+      <aside class="panel" id="formPanel">
+        <div class="form-row" id="lawyerRow">
+          <label for="lawyer">担当弁護士</label>
+          <input id="lawyer" list="lawyerList" placeholder="例: 川上 / 自由に入力できます">
+          <datalist id="lawyerList">
+            <option>川上</option>
+          </datalist>
+        </div>
+
+        <h2 id="formTitle">期限を追加</h2>
+        <p class="editing-flag" id="editingFlag">編集中 — 内容を直して「更新」を押してください</p>
+
+        <div class="form-row">
+          <label for="caseName">事件名・相手方 <span style="color:var(--red)">*</span></label>
+          <input id="caseName" placeholder="例: 依頼者名 / 相手方">
+        </div>
+        <div class="form-row">
+          <label for="courtCase">裁判所・事件番号（任意）</label>
+          <input id="courtCase" placeholder="例: 旭川地裁 令和7年(ワ)第123号">
+        </div>
+        <div class="form-row">
+          <label for="kind">書面・種別（選択も自由入力も可）</label>
+          <input id="kind" list="kindList" placeholder="例: 準備書面 / 自由に入力できます">
+          <datalist id="kindList">
+            <option>答弁書</option>
+            <option>準備書面</option>
+            <option>反論書面</option>
+            <option>証拠説明書</option>
+            <option>求釈明・上申書</option>
+            <option>控訴状</option>
+            <option>控訴理由書</option>
+            <option>上告受理申立理由書</option>
+            <option>回答書・返答期限</option>
+            <option>期日</option>
+            <option>その他作業</option>
+          </datalist>
+        </div>
+        <div class="form-row">
+          <label for="title">内容</label>
+          <input id="title" placeholder="例: 第3準備書面（損害論）">
+        </div>
+
+        <div class="form-row">
+          <label>提出期限の決め方</label>
+          <div class="seg" id="modeSeg">
+            <button type="button" data-mode="direct" class="active">期限日を直接入力</button>
+            <button type="button" data-mode="calc">期日から逆算</button>
+          </div>
+        </div>
+
+        <div class="form-row direct-box" id="directBox">
+          <label for="dueDate">提出期限日 <span style="color:var(--red)">*</span></label>
+          <input id="dueDate" type="date">
+        </div>
+
+        <div class="calc-box" id="calcBox">
+          <div class="form-row">
+            <label for="baseDate">基準となる期日（次回期日など）</label>
+            <input id="baseDate" type="date">
+          </div>
+          <div class="form-row">
+            <label for="offsetDays">その何日前までに提出</label>
+            <input id="offsetDays" type="number" min="0" step="1" value="7" inputmode="numeric">
+            <p class="hint">例: 「次回期日の1週間前まで」なら 7。基準日も含めず計算します。</p>
+            <p class="calc-result" id="calcResult"></p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="priority">重要度</label>
+          <select id="priority">
+            <option>高</option>
+            <option selected>中</option>
+            <option>低</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="memo">メモ</label>
+          <textarea id="memo" placeholder="準備物、注意点、裁判所からの指示など"></textarea>
+        </div>
+        <button class="primary" id="addBtn" style="width:100%;">追加</button>
+        <button id="cancelEditBtn" class="ghost" style="width:100%; margin-top:8px; display:none;">編集をやめる</button>
+      </aside>
+
+      <section>
+        <div class="banner" id="banner">
+          <span id="bannerText"></span>
+          <button class="dismiss ghost" id="bannerDismiss">閉じる</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat alert"><span>期限切れ</span><b id="count-overdue">0</b></div>
+          <div class="stat"><span>3日以内</span><b id="count-3day">0</b></div>
+          <div class="stat"><span>7日以内</span><b id="count-week">0</b></div>
+          <div class="stat"><span>未完了</span><b id="count-active">0</b></div>
+          <div class="stat"><span>完了</span><b id="count-done">0</b></div>
+        </div>
+
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="事件名・内容・事件番号で検索">
+          <select id="lawyerFilter">
+            <option value="all">担当すべて</option>
+          </select>
+          <select id="statusFilter">
+            <option value="active">未完了</option>
+            <option value="all">すべて</option>
+            <option value="done">完了のみ</option>
+          </select>
+          <select id="rangeFilter">
+            <option value="all">期限すべて</option>
+            <option value="overdue">期限切れ</option>
+            <option value="3day">3日以内</option>
+            <option value="week">7日以内</option>
+            <option value="month">30日以内</option>
+          </select>
+          <span class="badge" id="resultCount">0件</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>残り</th>
+                <th>提出期限</th>
+                <th>書面・種別</th>
+                <th>担当</th>
+                <th>事件 / 事件番号</th>
+                <th>内容</th>
+                <th>重要</th>
+                <th>メモ</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <div class="empty" id="empty" hidden>まだ期限がありません。左から追加してください。</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <input type="file" id="restoreInput" accept="application/json,.json" hidden>
+  <div class="toast" id="toast"></div>
+
+  <!-- 設定オーバーレイ -->
+  <div class="overlay" id="setupOverlay">
+    <div class="modal">
+      <h2>オンライン同期の設定</h2>
+      <p class="lead">Firebase（無料）を保存先にして、PC・スマホで同じ期限を共有します。初回だけ下の設定が必要です（一度きり）。</p>
+
+      <details class="help">
+        <summary>Firebaseの準備手順（初回のみ・数分）</summary>
+        <ol class="steps">
+          <li><a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console.firebase.google.com</a> をGmailで開き「プロジェクトを作成」</li>
+          <li>左メニュー <code>ビルド → Firestore Database</code> →「データベースを作成」→ リージョンは <code>asia-northeast1</code>（東京）を選択</li>
+          <li>プロジェクト設定（歯車）→「マイアプリ」→ <code>&lt;/&gt;</code>（ウェブ）を追加 → 表示される <code>firebaseConfig = { … }</code> をコピー</li>
+          <li>その中身を下の欄に貼り付け</li>
+          <li>Firestore の「ルール」タブに、下の「推奨ルール」を貼って公開</li>
+        </ol>
+        <div class="form-row">
+          <label>推奨ルール（コピーして貼り付け）</label>
+          <textarea readonly id="rulesText" style="min-height:90px;"></textarea>
+        </div>
+      </details>
+
+      <div class="form-row">
+        <label for="fbConfig">Firebase 設定（firebaseConfig の中身を貼り付け）<span style="color:var(--red)">*</span></label>
+        <textarea id="fbConfig" placeholder='{ "apiKey": "…", "authDomain": "…", "projectId": "…", … }'></textarea>
+      </div>
+
+      <div class="form-row">
+        <label for="workspaceId">共有ID（この文字列を知っている端末だけが同じデータを見ます）<span style="color:var(--red)">*</span></label>
+        <input id="workspaceId" placeholder="例: chiba-kigen-2026">
+        <p class="hint">推測されにくい長めの文字列にしてください。PC・スマホで<b>同じ値</b>を入れると同期します。</p>
+      </div>
+
+      <div class="form-row">
+        <label class="check"><input type="checkbox" id="usePin"> 暗証番号（PIN）で保護する</label>
+        <p class="hint">ONにすると、保存データを暗証番号で<b>暗号化</b>します（保存先の運営者にも中身は見えません）。他の端末でも同じPINが必要です。</p>
+      </div>
+      <div class="form-row" id="pinRow" style="display:none;">
+        <label for="pinInput">暗証番号（4桁以上）</label>
+        <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="数字や文字を組み合わせられます">
+        <label class="check" style="margin-top:8px;"><input type="checkbox" id="rememberPin" checked> この端末では次回から入力を省略</label>
+      </div>
+
+      <div class="row-btns">
+        <button class="primary" id="saveSetupBtn">保存して同期を開始</button>
+        <button class="ghost" id="closeSetupBtn">閉じる</button>
+      </div>
+      <p class="hint" id="setupError" style="color:var(--red); margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- PIN入力オーバーレイ -->
+  <div class="overlay" id="pinOverlay">
+    <div class="modal">
+      <h2>暗証番号の入力</h2>
+      <p class="lead">このデータは暗証番号で保護されています。表示するにはPINを入力してください。</p>
+      <div class="form-row">
+        <input id="pinPrompt" type="password" inputmode="numeric" autocomplete="off" placeholder="暗証番号">
+      </div>
+      <div class="form-row">
+        <label class="check"><input type="checkbox" id="pinPromptRemember" checked> この端末では次回から入力を省略</label>
+      </div>
+      <div class="row-btns">
+        <button class="primary" id="pinSubmitBtn">開く</button>
+        <button class="ghost" id="pinSettingsBtn">設定を開く</button>
+      </div>
+      <p class="hint" id="pinError" style="color:var(--red); margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ===== 保存キー =====
+    const CACHE_KEY = "deadline-task-watch-online-cache";
+    const CFG_KEY   = "deadline-task-watch-fbconfig";
+    const WS_KEY    = "deadline-task-watch-workspace";
+    const PIN_KEY   = "deadline-task-watch-pin"; // 端末に保存を選んだ場合のみ
+
+    // ===== 状態 =====
+    let items = loadCache();
+    let editingId = null;
+    let inputMode = "direct"; // direct | calc
+    let db = null, docRef = null, unsub = null;
+    let cryptoKey = null;          // 導出済みAES鍵
+    let currentSalt = null;        // base64 salt（暗号化時）
+    let lastRemote = null;         // 直近スナップショット
+    let applyingRemote = false;    // 遠隔反映中フラグ
+
+    const RULES = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /deadlineWatch/{docId} {
+      allow get, write: if true;
+      allow list: if false;
+    }
+  }
+}`;
+
+    const $ = id => document.getElementById(id);
+    const els = {
+      caseName: $("caseName"), courtCase: $("courtCase"), title: $("title"),
+      dueDate: $("dueDate"), baseDate: $("baseDate"), offsetDays: $("offsetDays"),
+      kind: $("kind"), lawyer: $("lawyer"), priority: $("priority"), memo: $("memo"),
+      rows: $("rows"), empty: $("empty"), search: $("search"),
+      statusFilter: $("statusFilter"), rangeFilter: $("rangeFilter"), lawyerFilter: $("lawyerFilter"),
+      addBtn: $("addBtn"), cancelEditBtn: $("cancelEditBtn"),
+      formTitle: $("formTitle"), formPanel: $("formPanel"),
+      directBox: $("directBox"), calcBox: $("calcBox"), calcResult: $("calcResult"),
+      resultCount: $("resultCount")
+    };
+
+    // ===== ローカルキャッシュ =====
+    function loadCache() {
+      try {
+        const data = JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+        return Array.isArray(data) ? data : [];
+      } catch { return []; }
+    }
+    function saveCache() { localStorage.setItem(CACHE_KEY, JSON.stringify(items)); }
+    function uid() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2); }
+
+    // ===== 日付ユーティリティ =====
+    function todayOnly() {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+    function daysUntil(dateText) {
+      if (!dateText) return null;
+      const due = new Date(`${dateText}T00:00:00`);
+      return Math.round((due - todayOnly()) / 86400000);
+    }
+    function addDays(dateText, n) {
+      if (!dateText) return "";
+      const d = new Date(`${dateText}T00:00:00`);
+      d.setDate(d.getDate() - n);
+      const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+    const WD = ["日","月","火","水","木","金","土"];
+    function fmtDate(dateText) {
+      if (!dateText) return "";
+      const d = new Date(`${dateText}T00:00:00`);
+      return `${dateText}（${WD[d.getDay()]}）`;
+    }
+
+    function resolveDue() {
+      if (inputMode === "calc") {
+        const off = parseInt(els.offsetDays.value, 10);
+        if (els.baseDate.value && Number.isFinite(off)) return addDays(els.baseDate.value, off);
+        return "";
+      }
+      return els.dueDate.value;
+    }
+    function updateCalcResult() {
+      const due = resolveDue();
+      if (inputMode === "calc") {
+        els.calcResult.textContent = due ? `→ 提出期限: ${fmtDate(due)}` : "→ 基準期日と日数を入力してください";
+      }
+    }
+    function setMode(mode) {
+      inputMode = mode;
+      document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+      els.directBox.classList.toggle("off", mode !== "direct");
+      els.calcBox.classList.toggle("on", mode === "calc");
+      updateCalcResult();
+    }
+    function leftLabel(days, done) {
+      if (done) return { txt: "完了", cls: "ok" };
+      if (days === null) return { txt: "—", cls: "" };
+      if (days < 0) return { txt: `${Math.abs(days)}日超過`, cls: "bad" };
+      if (days === 0) return { txt: "本日", cls: "bad" };
+      if (days <= 3) return { txt: `あと${days}日`, cls: "bad" };
+      if (days <= 7) return { txt: `あと${days}日`, cls: "warn" };
+      return { txt: `あと${days}日`, cls: "ok" };
+    }
+
+    function clearForm() {
+      els.caseName.value = ""; els.courtCase.value = ""; els.title.value = "";
+      els.dueDate.value = ""; els.baseDate.value = ""; els.offsetDays.value = "7";
+      els.memo.value = ""; els.priority.value = "中"; els.kind.value = "準備書面";
+      els.lawyer.value = els.lawyerFilter.value !== "all" ? els.lawyerFilter.value : "";
+      setMode("direct");
+    }
+    function exitEdit() {
+      editingId = null;
+      els.formPanel.classList.remove("editing");
+      els.formTitle.textContent = "期限を追加";
+      els.addBtn.textContent = "追加";
+      els.cancelEditBtn.style.display = "none";
+      clearForm();
+    }
+    function startEdit(id) {
+      const item = items.find(x => x.id === id);
+      if (!item) return;
+      editingId = id;
+      els.caseName.value = item.caseName || "";
+      els.courtCase.value = item.courtCase || "";
+      els.title.value = item.title || "";
+      els.kind.value = item.kind || "準備書面";
+      els.lawyer.value = item.lawyer || "";
+      els.priority.value = item.priority || "中";
+      els.memo.value = item.memo || "";
+      if (item.baseDate) {
+        setMode("calc");
+        els.baseDate.value = item.baseDate;
+        els.offsetDays.value = (item.offsetDays ?? 7);
+        els.dueDate.value = "";
+      } else {
+        setMode("direct");
+        els.dueDate.value = item.dueDate || "";
+      }
+      els.formPanel.classList.add("editing");
+      els.formTitle.textContent = "期限を編集";
+      els.addBtn.textContent = "更新";
+      els.cancelEditBtn.style.display = "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function submitForm() {
+      const caseName = els.caseName.value.trim();
+      const title = els.title.value.trim();
+      const dueDate = resolveDue();
+      if (!caseName) { toast("事件名を入力してください"); return; }
+      if (!dueDate) { toast(inputMode === "calc" ? "基準期日と日数を入力してください" : "提出期限日を入力してください"); return; }
+
+      const base = {
+        caseName,
+        courtCase: els.courtCase.value.trim(),
+        title,
+        kind: els.kind.value.trim(),
+        lawyer: els.lawyer.value.trim(),
+        priority: els.priority.value,
+        memo: els.memo.value.trim(),
+        dueDate,
+        baseDate: inputMode === "calc" ? els.baseDate.value : "",
+        offsetDays: inputMode === "calc" ? parseInt(els.offsetDays.value, 10) : null
+      };
+
+      if (editingId) {
+        const item = items.find(x => x.id === editingId);
+        if (item) Object.assign(item, base);
+        await persist(); exitEdit(); render(); toast("更新しました");
+      } else {
+        items.push({ id: uid(), done: false, createdAt: new Date().toISOString(), ...base });
+        await persist(); clearForm(); render(); toast("追加しました");
+      }
+    }
+
+    function filteredItems() {
+      const q = els.search.value.trim().toLowerCase();
+      return items
+        .filter(item => {
+          if (els.statusFilter.value === "active" && item.done) return false;
+          if (els.statusFilter.value === "done" && !item.done) return false;
+          if (els.lawyerFilter.value !== "all" && (item.lawyer || "") !== els.lawyerFilter.value) return false;
+          const hay = `${item.caseName} ${item.courtCase || ""} ${item.title} ${item.kind} ${item.lawyer || ""} ${item.priority} ${item.memo}`.toLowerCase();
+          if (q && !hay.includes(q)) return false;
+          const days = daysUntil(item.dueDate);
+          if (els.rangeFilter.value === "overdue") return !item.done && days !== null && days < 0;
+          if (els.rangeFilter.value === "3day") return !item.done && days !== null && days >= 0 && days <= 3;
+          if (els.rangeFilter.value === "week") return !item.done && days !== null && days >= 0 && days <= 7;
+          if (els.rangeFilter.value === "month") return !item.done && days !== null && days >= 0 && days <= 30;
+          return true;
+        })
+        .sort((a, b) => {
+          if (a.done !== b.done) return a.done ? 1 : -1;
+          return (a.dueDate || "").localeCompare(b.dueDate || "");
+        });
+    }
+
+    function refreshLawyers() {
+      const names = Array.from(new Set(items.map(i => (i.lawyer || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ja"));
+      const cur = els.lawyerFilter.value;
+      els.lawyerFilter.innerHTML = `<option value="all">担当すべて</option>` +
+        names.map(n => `<option value="${escapeAttr(n)}">${escapeHtml(n)}</option>`).join("");
+      els.lawyerFilter.value = names.includes(cur) || cur === "all" ? cur : "all";
+      const dlNames = Array.from(new Set(["川上", ...names]));
+      $("lawyerList").innerHTML = dlNames.map(n => `<option>${escapeHtml(n)}</option>`).join("");
+    }
+
+    function render() {
+      refreshLawyers();
+      const list = filteredItems();
+      els.rows.innerHTML = list.map(item => {
+        const days = daysUntil(item.dueDate);
+        const left = leftLabel(days, item.done);
+        const rowCls = item.done ? "row-done" : (days !== null && days < 0 ? "row-overdue" : (days !== null && days <= 3 ? "row-soon" : ""));
+        const sub = item.baseDate ? `<div class="due-sub">期日 ${escapeHtml(item.baseDate)} の ${item.offsetDays}日前</div>` : "";
+        const caseCell = escapeHtml(item.caseName) + (item.courtCase ? `<div class="due-sub">${escapeHtml(item.courtCase)}</div>` : "");
+        return `
+          <tr class="${rowCls}">
+            <td><span class="left ${left.cls}">${escapeHtml(left.txt)}</span></td>
+            <td><div class="due-main">${escapeHtml(fmtDate(item.dueDate))}</div>${sub}</td>
+            <td><span class="badge">${escapeHtml(item.kind)}</span></td>
+            <td>${escapeHtml(item.lawyer || "")}</td>
+            <td>${caseCell}</td>
+            <td>${escapeHtml(item.title || "")}</td>
+            <td><span class="badge ${item.priority === "高" ? "bad" : item.priority === "中" ? "warn" : "ok"}">${escapeHtml(item.priority)}</span></td>
+            <td>${escapeHtml(item.memo || "")}</td>
+            <td>
+              <div class="actions">
+                <button data-toggle="${escapeAttr(item.id)}">${item.done ? "戻す" : "完了"}</button>
+                <button data-edit="${escapeAttr(item.id)}">編集</button>
+                <button class="danger" data-delete="${escapeAttr(item.id)}">削除</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join("");
+      els.empty.hidden = items.length > 0;
+      els.resultCount.textContent = `${list.length}件`;
+
+      els.rows.querySelectorAll("[data-toggle]").forEach(b => b.addEventListener("click", async () => {
+        const item = items.find(x => x.id === b.dataset.toggle);
+        if (item) item.done = !item.done;
+        await persist(); render();
+      }));
+      els.rows.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => startEdit(b.dataset.edit)));
+      els.rows.querySelectorAll("[data-delete]").forEach(b => b.addEventListener("click", async () => {
+        const item = items.find(x => x.id === b.dataset.delete);
+        if (item && !confirm(`「${item.caseName}／${item.title || item.kind}」を削除しますか？`)) return;
+        if (editingId === b.dataset.delete) exitEdit();
+        items = items.filter(x => x.id !== b.dataset.delete);
+        await persist(); render();
+      }));
+      updateCounts();
+    }
+
+    function updateCounts() {
+      const active = items.filter(i => !i.done);
+      const overdue = active.filter(i => { const d = daysUntil(i.dueDate); return d !== null && d < 0; });
+      const d3 = active.filter(i => { const d = daysUntil(i.dueDate); return d !== null && d >= 0 && d <= 3; });
+      const wk = active.filter(i => { const d = daysUntil(i.dueDate); return d !== null && d >= 0 && d <= 7; });
+      $("count-overdue").textContent = overdue.length;
+      $("count-3day").textContent = d3.length;
+      $("count-week").textContent = wk.length;
+      $("count-active").textContent = active.length;
+      $("count-done").textContent = items.filter(i => i.done).length;
+      renderBanner(overdue.length, d3.length);
+    }
+    function renderBanner(overdue, soon) {
+      const banner = $("banner");
+      if (overdue === 0 && soon === 0) { banner.classList.remove("show"); return; }
+      const parts = [];
+      if (overdue) parts.push(`⚠ 期限切れ ${overdue}件`);
+      if (soon) parts.push(`期限まで3日以内 ${soon}件`);
+      $("bannerText").textContent = parts.join(" ／ ") + " — 至急ご確認ください";
+      banner.classList.add("show");
+    }
+
+    // ===== CSV / バックアップ =====
+    function exportCsv() {
+      const header = ["残り","提出期限","曜日","書面・種別","担当","事件","事件番号","内容","重要度","基準期日","何日前","完了","メモ"];
+      const rows = filteredItems().map(item => {
+        const days = daysUntil(item.dueDate);
+        return [
+          leftLabel(days, item.done).txt,
+          item.dueDate || "",
+          item.dueDate ? WD[new Date(item.dueDate + "T00:00:00").getDay()] : "",
+          item.kind, item.lawyer || "", item.caseName, item.courtCase || "", item.title || "", item.priority,
+          item.baseDate || "", item.baseDate ? (item.offsetDays ?? "") : "",
+          item.done ? "完了" : "", item.memo || ""
+        ];
+      });
+      const csv = [header].concat(rows).map(r => r.map(csvCell).join(",")).join("\r\n");
+      downloadBlob("﻿" + csv, "text/csv;charset=utf-8", `提出期限_${new Date().toISOString().slice(0,10)}.csv`);
+    }
+    function backup() {
+      const payload = { app: "deadline-task-watch", version: 2, exportedAt: new Date().toISOString(), items };
+      downloadBlob(JSON.stringify(payload, null, 2), "application/json", `提出期限バックアップ_${new Date().toISOString().slice(0,10)}.json`);
+      toast(`${items.length}件をバックアップしました`);
+    }
+    function restore(file) {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const incoming = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : null);
+          if (!incoming) { toast("対応していないファイルです"); return; }
+          const mode = confirm(`${incoming.length}件を読み込みます。\n[OK]=今のデータに追加（重複ID除く）\n[キャンセル]=今のデータを置き換え`);
+          if (mode) {
+            const ids = new Set(items.map(i => i.id));
+            incoming.forEach(i => { if (!i.id || !ids.has(i.id)) { i.id = i.id || uid(); items.push(i); } });
+          } else {
+            items = incoming.map(i => ({ id: i.id || uid(), done: !!i.done, ...i }));
+          }
+          await persist(); render(); toast(`復元しました（全${items.length}件）`);
+        } catch { toast("ファイルを読み込めませんでした"); }
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadBlob(content, type, filename) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+    function csvCell(v) { return `"${String(v ?? "").replace(/"/g, '""')}"`; }
+    function escapeHtml(v) {
+      return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function escapeAttr(v) { return escapeHtml(v).replace(/`/g, "&#96;"); }
+
+    let toastTimer;
+    function toast(msg) {
+      const t = $("toast");
+      t.textContent = msg; t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+    }
+
+    // ===== 同期ステータス表示 =====
+    function setSync(state, text) {
+      const chip = $("syncChip");
+      chip.className = "sync " + state;
+      $("syncText").textContent = text;
+    }
+
+    // ===== 暗号化（Web Crypto） =====
+    const enc = new TextEncoder();
+    const dec = new TextDecoder();
+    function b64(bytes) { return btoa(String.fromCharCode(...new Uint8Array(bytes))); }
+    function unb64(str) { return Uint8Array.from(atob(str), c => c.charCodeAt(0)); }
+
+    async function deriveKey(pin, saltBytes) {
+      const baseKey = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: saltBytes, iterations: 120000, hash: "SHA-256" },
+        baseKey,
+        { name: "AES-GCM", length: 256 },
+        false, ["encrypt", "decrypt"]
+      );
+    }
+    async function encryptItems() {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const data = enc.encode(JSON.stringify(items));
+      const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, data);
+      return { enc: true, salt: currentSalt, iv: b64(iv), ct: b64(ct) };
+    }
+    async function decryptDoc(d) {
+      const iv = unb64(d.iv);
+      const ct = unb64(d.ct);
+      const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, ct);
+      return JSON.parse(dec.decode(plain));
+    }
+
+    // ===== 保存（ローカル＋遠隔） =====
+    async function persist() {
+      saveCache();
+      if (!docRef) return; // 未設定＝ローカルのみ
+      try {
+        let payload;
+        if (cryptoKey) payload = await encryptItems();
+        else payload = { enc: false, plain: JSON.stringify(items) };
+        payload.updatedAt = new Date().toISOString();
+        await setDoc(docRef, payload);
+      } catch (e) {
+        console.error(e);
+        setSync("error", "保存に失敗（通信をご確認ください）");
+        toast("オンライン保存に失敗しました");
+      }
+    }
+
+    // ===== Firebase 初期化 =====
+    function getConfig() {
+      try { return JSON.parse(localStorage.getItem(CFG_KEY) || "null"); } catch { return null; }
+    }
+    function parseFbConfig(text) {
+      const m = String(text).match(/\{[\s\S]*\}/);
+      if (!m) throw new Error("設定が見つかりません");
+      return (new Function("return (" + m[0] + ")"))();
+    }
+
+    async function startSync() {
+      const cfg = getConfig();
+      const ws = localStorage.getItem(WS_KEY);
+      if (!cfg || !ws) { setSync("offline", "未設定（この端末のみ保存）"); return; }
+
+      if (unsub) { unsub(); unsub = null; }
+      try {
+        const app = initializeApp(cfg);
+        db = getFirestore(app);
+        docRef = doc(db, "deadlineWatch", ws);
+      } catch (e) {
+        console.error(e);
+        setSync("error", "Firebase設定に誤りがあります");
+        return;
+      }
+
+      // 端末に保存されたPINがあれば準備
+      const savedPin = localStorage.getItem(PIN_KEY);
+
+      setSync("online", "同期中…");
+      unsub = onSnapshot(docRef, async snap => {
+        if (!snap.exists()) {
+          // まだ何もない → 現在のローカル内容で初期化
+          await persist();
+          setSync("online", "同期中");
+          return;
+        }
+        const d = snap.data();
+        lastRemote = d;
+        if (d.enc) {
+          currentSalt = d.salt;
+          if (!cryptoKey) {
+            if (savedPin) {
+              try {
+                cryptoKey = await deriveKey(savedPin, unb64(currentSalt));
+                items = await decryptDoc(d);
+                applyingRemote = true; render(); saveCache(); applyingRemote = false;
+                setSync("online", "同期中（暗号化）");
+                return;
+              } catch { localStorage.removeItem(PIN_KEY); }
+            }
+            setSync("locked", "暗証番号が必要です");
+            openPinPrompt();
+            return;
+          }
+          try {
+            items = await decryptDoc(d);
+            applyingRemote = true; render(); saveCache(); applyingRemote = false;
+            setSync("online", "同期中（暗号化）");
+          } catch {
+            cryptoKey = null;
+            setSync("locked", "暗証番号が必要です");
+            openPinPrompt();
+          }
+        } else {
+          cryptoKey = null; currentSalt = null;
+          try { items = JSON.parse(d.plain || "[]"); } catch { items = []; }
+          applyingRemote = true; render(); saveCache(); applyingRemote = false;
+          setSync("online", "同期中");
+        }
+      }, err => {
+        console.error(err);
+        setSync("error", "同期エラー（ルール/通信をご確認）");
+      });
+    }
+
+    // ===== PIN入力オーバーレイ =====
+    function openPinPrompt() {
+      $("pinError").textContent = "";
+      $("pinPrompt").value = "";
+      $("pinOverlay").classList.add("show");
+      setTimeout(() => $("pinPrompt").focus(), 50);
+    }
+    function closePinPrompt() { $("pinOverlay").classList.remove("show"); }
+
+    async function submitPin() {
+      const pin = $("pinPrompt").value;
+      if (!pin) { $("pinError").textContent = "暗証番号を入力してください"; return; }
+      if (!lastRemote || !lastRemote.enc) { closePinPrompt(); return; }
+      try {
+        const key = await deriveKey(pin, unb64(lastRemote.salt));
+        // 試し復号
+        const iv = unb64(lastRemote.iv), ct = unb64(lastRemote.ct);
+        const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+        items = JSON.parse(dec.decode(plain));
+        cryptoKey = key; currentSalt = lastRemote.salt;
+        if ($("pinPromptRemember").checked) localStorage.setItem(PIN_KEY, pin);
+        else localStorage.removeItem(PIN_KEY);
+        applyingRemote = true; render(); saveCache(); applyingRemote = false;
+        closePinPrompt();
+        setSync("online", "同期中（暗号化）");
+      } catch {
+        $("pinError").textContent = "暗証番号が違います";
+      }
+    }
+
+    // ===== 設定オーバーレイ =====
+    function openSetup() {
+      const cfg = getConfig();
+      $("fbConfig").value = cfg ? JSON.stringify(cfg, null, 2) : "";
+      $("workspaceId").value = localStorage.getItem(WS_KEY) || suggestWs();
+      const encrypted = !!(lastRemote && lastRemote.enc) || !!localStorage.getItem(PIN_KEY);
+      $("usePin").checked = encrypted;
+      $("pinRow").style.display = encrypted ? "block" : "none";
+      $("pinInput").value = localStorage.getItem(PIN_KEY) || "";
+      $("rulesText").value = RULES;
+      $("setupError").textContent = "";
+      $("setupOverlay").classList.add("show");
+    }
+    function closeSetup() { $("setupOverlay").classList.remove("show"); }
+    function suggestWs() {
+      const r = crypto.getRandomValues(new Uint8Array(6));
+      return "kigen-" + Array.from(r, b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function saveSetup() {
+      const errEl = $("setupError");
+      errEl.textContent = "";
+      let cfg;
+      try { cfg = parseFbConfig($("fbConfig").value); }
+      catch { errEl.textContent = "Firebase設定を正しく貼り付けてください。"; return; }
+      if (!cfg.projectId || !cfg.apiKey) { errEl.textContent = "projectId / apiKey が見つかりません。"; return; }
+      const ws = $("workspaceId").value.trim();
+      if (!ws) { errEl.textContent = "共有IDを入力してください。"; return; }
+
+      const usePin = $("usePin").checked;
+      let pin = "";
+      if (usePin) {
+        pin = $("pinInput").value;
+        if (!pin || pin.length < 4) { errEl.textContent = "暗証番号は4文字以上にしてください。"; return; }
+      }
+
+      localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+      localStorage.setItem(WS_KEY, ws);
+
+      // 暗号鍵の準備
+      if (usePin) {
+        // 既存データが同じsaltで暗号化済みならそのsaltを踏襲、なければ新規
+        let saltBytes;
+        if (lastRemote && lastRemote.enc && lastRemote.salt) saltBytes = unb64(lastRemote.salt);
+        else saltBytes = crypto.getRandomValues(new Uint8Array(16));
+        currentSalt = b64(saltBytes);
+        cryptoKey = await deriveKey(pin, saltBytes);
+        if ($("rememberPin").checked) localStorage.setItem(PIN_KEY, pin);
+        else localStorage.removeItem(PIN_KEY);
+      } else {
+        cryptoKey = null; currentSalt = null;
+        localStorage.removeItem(PIN_KEY);
+      }
+
+      closeSetup();
+      setSync("online", "接続中…");
+      await startSync();
+      // 設定変更時は現在のローカル内容を書き込み（暗号方式の切替を反映）
+      await persist();
+      toast("同期を開始しました");
+    }
+
+    // ===== イベント =====
+    document.querySelectorAll("#modeSeg button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+    els.baseDate.addEventListener("input", updateCalcResult);
+    els.offsetDays.addEventListener("input", updateCalcResult);
+    els.addBtn.addEventListener("click", submitForm);
+    els.cancelEditBtn.addEventListener("click", exitEdit);
+    $("backupBtn").addEventListener("click", backup);
+    $("restoreBtn").addEventListener("click", () => $("restoreInput").click());
+    $("restoreInput").addEventListener("change", e => { if (e.target.files[0]) restore(e.target.files[0]); e.target.value = ""; });
+    $("exportBtn").addEventListener("click", exportCsv);
+    $("bannerDismiss").addEventListener("click", () => $("banner").classList.remove("show"));
+    els.search.addEventListener("input", render);
+    els.statusFilter.addEventListener("change", render);
+    els.lawyerFilter.addEventListener("change", () => {
+      if (!editingId && els.lawyerFilter.value !== "all") els.lawyer.value = els.lawyerFilter.value;
+      render();
+    });
+    els.rangeFilter.addEventListener("change", render);
+
+    $("settingsBtn").addEventListener("click", openSetup);
+    $("closeSetupBtn").addEventListener("click", closeSetup);
+    $("saveSetupBtn").addEventListener("click", saveSetup);
+    $("usePin").addEventListener("change", e => { $("pinRow").style.display = e.target.checked ? "block" : "none"; });
+    $("pinSubmitBtn").addEventListener("click", submitPin);
+    $("pinPrompt").addEventListener("keydown", e => { if (e.key === "Enter") submitPin(); });
+    $("pinSettingsBtn").addEventListener("click", () => { closePinPrompt(); openSetup(); });
+
+    // ===== 起動 =====
+    setMode("direct");
+    render();
+    if (getConfig() && localStorage.getItem(WS_KEY)) {
+      startSync();
+    } else {
+      setSync("offline", "未設定（この端末のみ保存）");
+      openSetup();
+    }
+  </script>
+</body>
+</html>
