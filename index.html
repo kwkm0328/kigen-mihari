@@ -487,6 +487,18 @@
     // ===== 弁護士一覧（タブ選択・自由入力も可） =====
     const LAWYERS = ["山本", "川上", "櫻井", "赤岡", "嶋村"];
 
+    // ===== 埋め込み設定（全員共通。各自はPINを入れるだけ） =====
+    // ※ここを書き換えると保存先を変更できます。中身はPINで暗号化されるので公開されても安全。
+    const FB_CONFIG_EMBEDDED = {
+      apiKey: "AIzaSyDNnPh1QeSPcdF1SBxwMPvp0fcztC9DzYc",
+      authDomain: "kigen-kanri.firebaseapp.com",
+      projectId: "kigen-kanri",
+      storageBucket: "kigen-kanri.firebasestorage.app",
+      messagingSenderId: "379547618828",
+      appId: "1:379547618828:web:74c4fd08a82c3cef3da829"
+    };
+    const WS_EMBEDDED = "kigen-f35c820376f5";
+
     // ===== 状態 =====
     let items = loadCache();
     let editingId = null;
@@ -900,8 +912,8 @@ service cloud.firestore {
     }
 
     async function startSync() {
-      const cfg = getConfig();
-      const ws = localStorage.getItem(WS_KEY);
+      const cfg = getConfig() || FB_CONFIG_EMBEDDED;
+      const ws = localStorage.getItem(WS_KEY) || WS_EMBEDDED;
       if (!cfg || !ws) { setSync("offline", "未設定（この端末のみ保存）"); return; }
 
       if (unsub) { unsub(); unsub = null; }
@@ -997,9 +1009,8 @@ service cloud.firestore {
 
     // ===== 設定オーバーレイ =====
     function openSetup() {
-      const cfg = getConfig();
-      $("fbConfig").value = cfg ? JSON.stringify(cfg, null, 2) : "";
-      $("workspaceId").value = localStorage.getItem(WS_KEY) || suggestWs();
+      $("fbConfig").value = JSON.stringify(getConfig() || FB_CONFIG_EMBEDDED, null, 2);
+      $("workspaceId").value = localStorage.getItem(WS_KEY) || WS_EMBEDDED;
       const encrypted = !!(lastRemote && lastRemote.enc) || !!localStorage.getItem(PIN_KEY);
       $("usePin").checked = encrypted;
       $("pinRow").style.display = encrypted ? "block" : "none";
@@ -1089,12 +1100,8 @@ service cloud.firestore {
     renderLawyerTabs();
     setMode("direct");
     render();
-    if (getConfig() && localStorage.getItem(WS_KEY)) {
-      startSync();
-    } else {
-      setSync("offline", "未設定（この端末のみ保存）");
-      openSetup();
-    }
+    // 設定はアプリに埋め込み済み → 常に同期開始。暗号化データなら自動でPIN入力を促す。
+    startSync();
   </script>
 </body>
 </html>
